@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 import webapp2
+import cgi
 
 form = """
     <form method="post">
@@ -22,15 +23,15 @@ form = """
         <br>
 
         <label> Month
-            <input type="text" name="month">
+            <input type="text" name="month" value="%(month)s">
         </label>
 
         <label> Day
-            <input type="text" name="day">
+            <input type="text" name="day" value="%(day)s">
         </label>
 
         <label> Year
-            <input type="text" name="year">
+            <input type="text" name="year" value="%(year)s">
         </label>
 
         <div>%(error)s</div>
@@ -76,28 +77,46 @@ def valid_year(year):
         if year > 1900 and year < 2020:
             return year
 
+# Implementing HTML Escaping via Python
+def escape_html(s):
+    return cgi.escape(s, quote=True)
 
 
 class MainHandler(webapp2.RequestHandler):
-    def write_form(self, error=""):
-        self.response.out.write(form % {"error": error})
+    def write_form(self, error="", month="", day="", year=""):
+        self.response.out.write(form % {"error": error,
+                                        "month": escape_html(month),
+                                        "day": escape_html(day),
+                                        "year": escape_html(year)})
 
     def get(self):
         # Hello
         self.write_form()
 
     def post(self):
-        user_month = valid_month(self.request.get('month'))
-        user_day = valid_day(self.request.get('day'))
-        user_year = valid_year(self.request.get('year'))
+        #what the user adds into the fields
+        user_month = self.request.get('month')
+        user_day = self.request.get('day')
+        user_year = self.request.get('year')
 
-        if not (user_month and user_day and user_year):
-            self.write_form("That doesn't look valid")
+        month = valid_month(self.request.get('month'))
+        day = valid_day(self.request.get('day'))
+        year = valid_year(self.request.get('year'))
+
+        if not (month and day and year):
+            # render error div but leave what user typed in
+            self.write_form("That doesn't look valid",
+                            user_month, user_day, user_year)
             # else if all true
         else:
-            self.response.out.write("Thanks! Das a Valid Form")
+            self.redirect("/thanks")
+
+class ThanksHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.out.write("Thanks! Das a Valid Form")
 
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/thanks', ThanksHandler)
 ], debug=True)
