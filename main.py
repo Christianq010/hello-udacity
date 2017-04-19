@@ -5,7 +5,8 @@ import jinja2
 
 # Our templates to be stored in a templates folder
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader= jinja2.FileSystemLoader(template_dir))
+jinja_env = jinja2.Environment(loader= jinja2.FileSystemLoader(template_dir),
+                               autoescape=True)
 
 
 class Handler(webapp2.RequestHandler):
